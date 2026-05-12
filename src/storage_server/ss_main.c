@@ -1,5 +1,6 @@
 #include "common.h"
 #include "logger.h"
+#include "ss_core.h"
 
 int main(int argc, char *argv[]) {
     init_logger("ss.log");
@@ -12,6 +13,9 @@ int main(int argc, char *argv[]) {
     }
 
     log_message(LOG_INFO, "Storage Server will listen on port %d", ss_port);
+    
+    // Connect and register with NM
+    ss_init(ss_port);
 
     // Main loop
     while (1) {
