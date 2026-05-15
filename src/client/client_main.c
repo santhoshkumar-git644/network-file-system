@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     }
     username[strcspn(username, "\n")] = 0; // Remove newline
     
-    int nm_sock = connect_to_nm("127.0.0.1", NM_PORT);
+    int nm_sock = connect_to_nm("127.0.0.1", 8082); // NM_CLIENT_PORT
     if (nm_sock < 0) {
         return 1;
     }
