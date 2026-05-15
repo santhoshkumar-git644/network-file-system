@@ -1,5 +1,6 @@
 #include "common.h"
 #include "logger.h"
+#include "client_handler.h"
 
 int connect_to_nm(const char* nm_ip, int nm_port) {
     int sock;
@@ -57,9 +58,34 @@ int main(int argc, char *argv[]) {
             break;
         }
         
-        // Parse and send command to NM (to be implemented)
-        log_message(LOG_INFO, "Command entered: %s", command_buffer);
-        // send(nm_sock, command_buffer, strlen(command_buffer), 0);
+        // Parse command
+        ClientCommand cmd;
+        memset(&cmd, 0, sizeof(ClientCommand));
+        
+        char *token = strtok(command_buffer, " ");
+        if (token == NULL) continue;
+        
+        if (strcmp(token, "VIEW") == 0) {
+            cmd.type = CMD_VIEW;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+        } else if (strcmp(token, "LIST") == 0) {
+            cmd.type = CMD_LIST_USERS;
+        } else {
+            cmd.type = CMD_UNKNOWN;
+            log_message(LOG_WARN, "Unknown command or not yet implemented");
+            continue;
+        }
+        
+        send(nm_sock, &cmd, sizeof(ClientCommand), 0);
+        
+        // Wait for response
+        char response[MAX_BUFFER_SIZE];
+        int bytes = recv(nm_sock, response, sizeof(response) - 1, 0);
+        if (bytes > 0) {
+            response[bytes] = '\0';
+            printf("%s\n", response);
+        }
     }
 
     close(nm_sock);
