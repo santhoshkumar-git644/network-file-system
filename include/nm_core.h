@@ -12,6 +12,7 @@ typedef struct {
     int socket_fd;
 } StorageServerEntry;
 
+extern StorageServerEntry ss_list[MAX_STORAGE_SERVERS];
 void init_nm_state();
 void start_nm_server();
 void* handle_ss_connection(void* arg);
