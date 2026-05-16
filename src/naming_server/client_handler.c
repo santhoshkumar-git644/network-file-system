@@ -27,6 +27,14 @@ void* handle_client_connection(void* arg) {
             log_message(LOG_INFO, "Received LIST command");
             // Placeholder: List users
             strcpy(response, "--> user1\n--> user2");
+        } else if (cmd.type == CMD_READ) {
+            log_message(LOG_INFO, "Received READ command for file: %s", cmd.arg1);
+            int ss_id = hashmap_lookup(cmd.arg1);
+            if (ss_id >= 0 && ss_list[ss_id].is_active) {
+                sprintf(response, "SS_INFO %s %d", ss_list[ss_id].info.ip, ss_list[ss_id].info.client_port);
+            } else {
+                strcpy(response, "ERROR: File not found or SS down");
+            }
         } else {
             log_message(LOG_WARN, "Received UNKNOWN command");
             strcpy(response, "ERROR: Unknown command");
