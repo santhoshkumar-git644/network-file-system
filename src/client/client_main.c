@@ -27,6 +27,46 @@ int connect_to_nm(const char* nm_ip, int nm_port) {
     return sock;
 }
 
+void connect_to_ss_and_read(const char* ip, int port, const char* filename) {
+    int sock;
+    struct sockaddr_in serv_addr;
+    
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        log_message(LOG_ERROR, "SS Socket creation error");
+        return;
+    }
+    
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port);
+    inet_pton(AF_INET, ip, &serv_addr.sin_addr);
+    
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        log_message(LOG_ERROR, "Connection to SS Failed");
+        return;
+    }
+    
+    // Send READ request to SS
+    ClientCommand cmd;
+    memset(&cmd, 0, sizeof(ClientCommand));
+    cmd.type = CMD_READ;
+    strncpy(cmd.arg1, filename, MAX_FILENAME);
+    send(sock, &cmd, sizeof(cmd), 0);
+    
+    // Receive file content
+    char buffer[MAX_BUFFER_SIZE];
+    int bytes;
+    printf("--- File Content (%s) ---\n", filename);
+    while ((bytes = recv(sock, buffer, sizeof(buffer)-1, 0)) > 0) {
+        buffer[bytes] = '\0';
+        printf("%s", buffer);
+        if (strstr(buffer, "EOF")) { // End marker
+            break;
+        }
+    }
+    printf("\n--- End of File ---\n");
+    close(sock);
+}
+
 int main(int argc, char *argv[]) {
     init_logger(NULL); // Client logs to stdout by default
     
@@ -92,7 +132,18 @@ int main(int argc, char *argv[]) {
         int bytes = recv(nm_sock, response, sizeof(response) - 1, 0);
         if (bytes > 0) {
             response[bytes] = '\0';
-            printf("%s\n", response);
+            
+            if (strncmp(response, "SS_INFO", 7) == 0) {
+                char ip[INET_ADDRSTRLEN];
+                int port;
+                if (sscanf(response, "SS_INFO %s %d", ip, &port) == 2) {
+                    connect_to_ss_and_read(ip, port, cmd.arg1);
+                } else {
+                    printf("ERROR: Malformed SS_INFO response\n");
+                }
+            } else {
+                printf("%s\n", response);
+            }
         }
     }
 
