@@ -71,6 +71,14 @@ int main(int argc, char *argv[]) {
             if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
         } else if (strcmp(token, "LIST") == 0) {
             cmd.type = CMD_LIST_USERS;
+        } else if (strcmp(token, "READ") == 0) {
+            cmd.type = CMD_READ;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+            else {
+                printf("Usage: READ <filename>\n");
+                continue;
+            }
         } else {
             cmd.type = CMD_UNKNOWN;
             log_message(LOG_WARN, "Unknown command or not yet implemented");
