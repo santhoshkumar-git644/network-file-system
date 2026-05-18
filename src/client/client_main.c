@@ -119,6 +119,18 @@ int main(int argc, char *argv[]) {
                 printf("Usage: READ <filename>\n");
                 continue;
             }
+        } else if (strcmp(token, "WRITE") == 0) {
+            cmd.type = CMD_WRITE;
+            char *arg1 = strtok(NULL, " ");
+            char *arg2 = strtok(NULL, " ");
+            if (arg1 && arg2) {
+                strncpy(cmd.arg1, arg1, sizeof(cmd.arg1) - 1);
+                strncpy(cmd.arg2, arg2, sizeof(cmd.arg2) - 1); // sentence number
+            } else {
+                printf("Usage: WRITE <filename> <sentence_number>\n");
+                continue;
+            }
+            // For now, simple interaction. In a full implementation, the client would enter a write loop until ETIRW.
         } else {
             cmd.type = CMD_UNKNOWN;
             log_message(LOG_WARN, "Unknown command or not yet implemented");
