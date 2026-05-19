@@ -21,6 +21,37 @@ void* ss_handle_client_connection(void* arg) {
                 send(client_socket, "ERROR: File not found on SS\n", 28, 0);
             }
             send(client_socket, "EOF\n", 4, 0);
+        } else if (cmd.type == CMD_WRITE) {
+            log_message(LOG_INFO, "Client requested WRITE for file: %s (Sentence: %s)", cmd.arg1, cmd.arg2);
+            // Verify file exists
+            FILE *fp = fopen(cmd.arg1, "a");
+            if (!fp) {
+                send(client_socket, "ERROR: File not found on SS\n", 28, 0);
+            } else {
+                fclose(fp);
+                send(client_socket, "ACK: Write session started", 26, 0);
+                char buffer[MAX_BUFFER_SIZE];
+                while (1) {
+                    int b = recv(client_socket, buffer, sizeof(buffer)-1, 0);
+                    if (b <= 0) break;
+                    buffer[b] = '\0';
+                    
+                    if (strcmp(buffer, "ETIRW") == 0) {
+                        send(client_socket, "Write Successful!", 17, 0);
+                        break;
+                    }
+                    
+                    // Simple append for now
+                    fp = fopen(cmd.arg1, "a");
+                    if (fp) {
+                        fprintf(fp, "%s\n", buffer); // Assuming simple lines
+                        fclose(fp);
+                        send(client_socket, "ACK", 3, 0);
+                    } else {
+                        send(client_socket, "ERROR", 5, 0);
+                    }
+                }
+            }
         } else {
             log_message(LOG_WARN, "Unsupported command received by SS from client");
         }
