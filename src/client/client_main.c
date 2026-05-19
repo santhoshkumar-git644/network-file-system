@@ -67,6 +67,67 @@ void connect_to_ss_and_read(const char* ip, int port, const char* filename) {
     close(sock);
 }
 
+void connect_to_ss_and_write(const char* ip, int port, ClientCommand* initial_cmd) {
+    int sock;
+    struct sockaddr_in serv_addr;
+    
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        log_message(LOG_ERROR, "SS Socket creation error for WRITE");
+        return;
+    }
+    
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port);
+    inet_pton(AF_INET, ip, &serv_addr.sin_addr);
+    
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        log_message(LOG_ERROR, "Connection to SS Failed for WRITE");
+        return;
+    }
+    
+    // Send initial WRITE request
+    send(sock, initial_cmd, sizeof(ClientCommand), 0);
+    
+    char buffer[MAX_BUFFER_SIZE];
+    int bytes = recv(sock, buffer, sizeof(buffer)-1, 0);
+    if (bytes > 0) {
+        buffer[bytes] = '\0';
+        printf("%s\n", buffer);
+        if (strstr(buffer, "ERROR")) {
+            close(sock);
+            return;
+        }
+    }
+    
+    // Interactive write loop until ETIRW
+    while (1) {
+        printf("Client (WRITE %s)> ", initial_cmd->arg1);
+        if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+            break;
+        }
+        buffer[strcspn(buffer, "\n")] = 0;
+        
+        send(sock, buffer, strlen(buffer), 0);
+        
+        if (strcmp(buffer, "ETIRW") == 0) {
+            bytes = recv(sock, buffer, sizeof(buffer)-1, 0);
+            if (bytes > 0) {
+                buffer[bytes] = '\0';
+                printf("%s\n", buffer);
+            }
+            break;
+        }
+        
+        // Wait for ack/result
+        bytes = recv(sock, buffer, sizeof(buffer)-1, 0);
+        if (bytes > 0) {
+            buffer[bytes] = '\0';
+            printf("%s\n", buffer);
+        }
+    }
+    close(sock);
+}
+
 int main(int argc, char *argv[]) {
     init_logger(NULL); // Client logs to stdout by default
     
@@ -149,7 +210,11 @@ int main(int argc, char *argv[]) {
                 char ip[INET_ADDRSTRLEN];
                 int port;
                 if (sscanf(response, "SS_INFO %s %d", ip, &port) == 2) {
-                    connect_to_ss_and_read(ip, port, cmd.arg1);
+                    if (cmd.type == CMD_READ) {
+                        connect_to_ss_and_read(ip, port, cmd.arg1);
+                    } else if (cmd.type == CMD_WRITE) {
+                        connect_to_ss_and_write(ip, port, &cmd);
+                    }
                 } else {
                     printf("ERROR: Malformed SS_INFO response\n");
                 }
