@@ -34,6 +34,23 @@ void* ss_handle_client_connection(void* arg) {
             if (!fp) {
                 send(client_socket, "ERROR: File not found on SS\n", 28, 0);
             } else {
+                // Create backup for UNDO
+                char backup_name[MAX_FILENAME];
+                snprintf(backup_name, sizeof(backup_name), ".%s.bak", cmd.arg1);
+                
+                FILE *backup_fp = fopen(backup_name, "w");
+                if (backup_fp) {
+                    char temp_buf[4096];
+                    size_t bytes_read;
+                    while ((bytes_read = fread(temp_buf, 1, sizeof(temp_buf), fp)) > 0) {
+                        fwrite(temp_buf, 1, bytes_read, backup_fp);
+                    }
+                    fclose(backup_fp);
+                    fseek(fp, 0, SEEK_SET); // Reset pointer after copying
+                } else {
+                    log_message(LOG_WARN, "Failed to create backup for UNDO");
+                }
+                
                 fseek(fp, 0, SEEK_END);
                 long fsize = ftell(fp);
                 fseek(fp, 0, SEEK_SET);
