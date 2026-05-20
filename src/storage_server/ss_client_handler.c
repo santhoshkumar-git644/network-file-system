@@ -1,5 +1,6 @@
 #include "ss_client_handler.h"
 #include "logger.h"
+#include "sentence_parser.h"
 
 void* ss_handle_client_connection(void* arg) {
     int client_socket = *((int*)arg);
@@ -23,33 +24,80 @@ void* ss_handle_client_connection(void* arg) {
             send(client_socket, "EOF\n", 4, 0);
         } else if (cmd.type == CMD_WRITE) {
             log_message(LOG_INFO, "Client requested WRITE for file: %s (Sentence: %s)", cmd.arg1, cmd.arg2);
-            // Verify file exists
-            FILE *fp = fopen(cmd.arg1, "a");
+            int sentence_index = atoi(cmd.arg2);
+            
+            // Lock sentence here (TODO: Implement actual locks)
+            log_message(LOG_INFO, "Locking sentence %d for file %s", sentence_index, cmd.arg1);
+            
+            // Read entire file into memory for now
+            FILE *fp = fopen(cmd.arg1, "r");
             if (!fp) {
                 send(client_socket, "ERROR: File not found on SS\n", 28, 0);
             } else {
+                fseek(fp, 0, SEEK_END);
+                long fsize = ftell(fp);
+                fseek(fp, 0, SEEK_SET);
+                
+                char *file_content = malloc(fsize + 1);
+                fread(file_content, 1, fsize, fp);
+                file_content[fsize] = 0;
                 fclose(fp);
-                send(client_socket, "ACK: Write session started", 26, 0);
-                char buffer[MAX_BUFFER_SIZE];
-                while (1) {
-                    int b = recv(client_socket, buffer, sizeof(buffer)-1, 0);
-                    if (b <= 0) break;
-                    buffer[b] = '\0';
-                    
-                    if (strcmp(buffer, "ETIRW") == 0) {
-                        send(client_socket, "Write Successful!", 17, 0);
-                        break;
+                
+                ParsedFile parsed;
+                parse_file_content(file_content, &parsed);
+                free(file_content);
+                
+                if (sentence_index < 0 || sentence_index > parsed.sentence_count) {
+                    send(client_socket, "ERROR: Sentence index out of range\n", 35, 0);
+                    // unlock
+                } else {
+                    send(client_socket, "ACK: Write session started", 26, 0);
+                    char buffer[MAX_BUFFER_SIZE];
+                    while (1) {
+                        int b = recv(client_socket, buffer, sizeof(buffer)-1, 0);
+                        if (b <= 0) break;
+                        buffer[b] = '\0';
+                        
+                        if (strcmp(buffer, "ETIRW") == 0) {
+                            send(client_socket, "Write Successful!", 17, 0);
+                            break;
+                        }
+                        
+                        // Parse <word_index> <content>
+                        char* word_idx_str = strtok(buffer, " ");
+                        char* new_word = strtok(NULL, "");
+                        
+                        if (word_idx_str && new_word) {
+                            int word_idx = atoi(word_idx_str);
+                            Sentence* s = &parsed.sentences[sentence_index];
+                            
+                            // Insert word (shift others)
+                            if (word_idx >= 0 && word_idx <= s->word_count) {
+                                for (int i = s->word_count; i > word_idx; i--) {
+                                    strcpy(s->words[i], s->words[i-1]);
+                                }
+                                strcpy(s->words[word_idx], new_word);
+                                s->word_count++;
+                                send(client_socket, "ACK: Word inserted", 18, 0);
+                            } else {
+                                send(client_socket, "ERROR: Word index out of range", 30, 0);
+                            }
+                        } else {
+                            send(client_socket, "ERROR: Invalid format", 21, 0);
+                        }
                     }
                     
-                    // Simple append for now
-                    fp = fopen(cmd.arg1, "a");
+                    // Write back to file
+                    char *new_content = malloc(MAX_BUFFER_SIZE * 10);
+                    reconstruct_file_content(&parsed, new_content);
+                    fp = fopen(cmd.arg1, "w");
                     if (fp) {
-                        fprintf(fp, "%s\n", buffer); // Assuming simple lines
+                        fputs(new_content, fp);
                         fclose(fp);
-                        send(client_socket, "ACK", 3, 0);
-                    } else {
-                        send(client_socket, "ERROR", 5, 0);
                     }
+                    free(new_content);
+                    
+                    log_message(LOG_INFO, "Unlocking sentence %d for file %s", sentence_index, cmd.arg1);
                 }
             }
         } else {
