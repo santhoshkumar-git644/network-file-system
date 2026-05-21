@@ -12,6 +12,7 @@ typedef enum {
     CMD_INFO,
     CMD_READ,
     CMD_WRITE,
+    CMD_UNDO,
     CMD_UNKNOWN
 } CommandType;
 
