@@ -192,6 +192,14 @@ int main(int argc, char *argv[]) {
                 continue;
             }
             // For now, simple interaction. In a full implementation, the client would enter a write loop until ETIRW.
+        } else if (strcmp(token, "UNDO") == 0) {
+            cmd.type = CMD_UNDO;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+            else {
+                printf("Usage: UNDO <filename>\n");
+                continue;
+            }
         } else {
             cmd.type = CMD_UNKNOWN;
             log_message(LOG_WARN, "Unknown command or not yet implemented");
