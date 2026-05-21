@@ -27,9 +27,10 @@ void* handle_client_connection(void* arg) {
             log_message(LOG_INFO, "Received LIST command");
             // Placeholder: List users
             strcpy(response, "--> user1\n--> user2");
-        } else if (cmd.type == CMD_READ || cmd.type == CMD_WRITE) {
-            log_message(LOG_INFO, "Received %s command for file: %s", 
-                        cmd.type == CMD_READ ? "READ" : "WRITE", cmd.arg1);
+        } else if (cmd.type == CMD_READ || cmd.type == CMD_WRITE || cmd.type == CMD_UNDO) {
+            const char* cmd_name = (cmd.type == CMD_READ) ? "READ" : 
+                                   (cmd.type == CMD_WRITE) ? "WRITE" : "UNDO";
+            log_message(LOG_INFO, "Received %s command for file: %s", cmd_name, cmd.arg1);
             int ss_id = hashmap_lookup(cmd.arg1);
             if (ss_id >= 0 && ss_list[ss_id].is_active) {
                 sprintf(response, "SS_INFO %s %d", ss_list[ss_id].info.ip, ss_list[ss_id].info.client_port);
