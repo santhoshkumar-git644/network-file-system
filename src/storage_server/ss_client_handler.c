@@ -117,6 +117,29 @@ void* ss_handle_client_connection(void* arg) {
                     log_message(LOG_INFO, "Unlocking sentence %d for file %s", sentence_index, cmd.arg1);
                 }
             }
+        } else if (cmd.type == CMD_UNDO) {
+            log_message(LOG_INFO, "Client requested UNDO for file: %s", cmd.arg1);
+            char backup_name[MAX_FILENAME];
+            snprintf(backup_name, sizeof(backup_name), ".%s.bak", cmd.arg1);
+            
+            FILE *backup_fp = fopen(backup_name, "r");
+            if (!backup_fp) {
+                send(client_socket, "ERROR: No undo history available\n", 33, 0);
+            } else {
+                FILE *fp = fopen(cmd.arg1, "w");
+                if (fp) {
+                    char temp_buf[4096];
+                    size_t bytes_read;
+                    while ((bytes_read = fread(temp_buf, 1, sizeof(temp_buf), backup_fp)) > 0) {
+                        fwrite(temp_buf, 1, bytes_read, fp);
+                    }
+                    fclose(fp);
+                    send(client_socket, "UNDO Successful!\n", 17, 0);
+                } else {
+                    send(client_socket, "ERROR: Failed to restore file\n", 30, 0);
+                }
+                fclose(backup_fp);
+            }
         } else {
             log_message(LOG_WARN, "Unsupported command received by SS from client");
         }
