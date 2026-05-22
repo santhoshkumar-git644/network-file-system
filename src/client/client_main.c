@@ -225,6 +225,14 @@ int main(int argc, char *argv[]) {
                 continue;
             }
             // For now, simple interaction. In a full implementation, the client would enter a write loop until ETIRW.
+        } else if (strcmp(token, "CREATE") == 0) {
+            cmd.type = CMD_CREATE;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+            else {
+                printf("Usage: CREATE <filename>\n");
+                continue;
+            }
         } else if (strcmp(token, "UNDO") == 0) {
             cmd.type = CMD_UNDO;
             char *arg = strtok(NULL, " ");
