@@ -37,6 +37,28 @@ void* handle_client_connection(void* arg) {
             } else {
                 strcpy(response, "ERROR: File not found or SS down");
             }
+        } else if (cmd.type == CMD_CREATE) {
+            log_message(LOG_INFO, "Received CREATE command for file: %s", cmd.arg1);
+            if (hashmap_lookup(cmd.arg1) >= 0) {
+                strcpy(response, "ERROR: File already exists");
+            } else {
+                int selected_ss = -1;
+                for (int i = 0; i < MAX_STORAGE_SERVERS; i++) {
+                    if (ss_list[i].is_active) {
+                        selected_ss = i;
+                        break;
+                    }
+                }
+                
+                if (selected_ss >= 0) {
+                    // Tell client to connect to SS and CREATE (Client directly creates on SS)
+                    // Alternatively NM can tell SS. We'll return SS_INFO to Client so Client creates it.
+                    hashmap_insert(cmd.arg1, selected_ss);
+                    sprintf(response, "SS_INFO %s %d", ss_list[selected_ss].info.ip, ss_list[selected_ss].info.client_port);
+                } else {
+                    strcpy(response, "ERROR: No Storage Servers available");
+                }
+            }
         } else {
             log_message(LOG_WARN, "Received UNKNOWN command");
             strcpy(response, "ERROR: Unknown command");
