@@ -266,6 +266,22 @@ int main(int argc, char *argv[]) {
                 printf("Usage: CREATE <filename>\n");
                 continue;
             }
+        } else if (strcmp(token, "DELETE") == 0) {
+            cmd.type = CMD_DELETE;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+            else {
+                printf("Usage: DELETE <filename>\n");
+                continue;
+            }
+        } else if (strcmp(token, "INFO") == 0) {
+            cmd.type = CMD_INFO;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+            else {
+                printf("Usage: INFO <filename>\n");
+                continue;
+            }
         } else if (strcmp(token, "UNDO") == 0) {
             cmd.type = CMD_UNDO;
             char *arg = strtok(NULL, " ");
