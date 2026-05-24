@@ -27,13 +27,21 @@ void* handle_client_connection(void* arg) {
             log_message(LOG_INFO, "Received LIST command");
             // Placeholder: List users
             strcpy(response, "--> user1\n--> user2");
-        } else if (cmd.type == CMD_READ || cmd.type == CMD_WRITE || cmd.type == CMD_UNDO) {
+        } else if (cmd.type == CMD_READ || cmd.type == CMD_WRITE || cmd.type == CMD_UNDO || cmd.type == CMD_DELETE || cmd.type == CMD_INFO) {
             const char* cmd_name = (cmd.type == CMD_READ) ? "READ" : 
-                                   (cmd.type == CMD_WRITE) ? "WRITE" : "UNDO";
+                                   (cmd.type == CMD_WRITE) ? "WRITE" : 
+                                   (cmd.type == CMD_UNDO) ? "UNDO" : 
+                                   (cmd.type == CMD_DELETE) ? "DELETE" : "INFO";
             log_message(LOG_INFO, "Received %s command for file: %s", cmd_name, cmd.arg1);
             int ss_id = hashmap_lookup(cmd.arg1);
             if (ss_id >= 0 && ss_list[ss_id].is_active) {
                 sprintf(response, "SS_INFO %s %d", ss_list[ss_id].info.ip, ss_list[ss_id].info.client_port);
+                
+                // If it's a delete, we should ideally remove it from the hashmap after successful deletion,
+                // but for simplicity we can remove it immediately from NM perspective.
+                if (cmd.type == CMD_DELETE) {
+                    hashmap_delete(cmd.arg1);
+                }
             } else {
                 strcpy(response, "ERROR: File not found or SS down");
             }
