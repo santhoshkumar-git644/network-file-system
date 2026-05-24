@@ -140,6 +140,15 @@ void* ss_handle_client_connection(void* arg) {
                 }
                 fclose(backup_fp);
             }
+        } else if (cmd.type == CMD_CREATE) {
+            log_message(LOG_INFO, "Client requested CREATE for file: %s", cmd.arg1);
+            FILE *fp = fopen(cmd.arg1, "w");
+            if (fp) {
+                fclose(fp);
+                send(client_socket, "CREATE Successful!\n", 19, 0);
+            } else {
+                send(client_socket, "ERROR: Could not create file\n", 29, 0);
+            }
         } else {
             log_message(LOG_WARN, "Unsupported command received by SS from client");
         }
