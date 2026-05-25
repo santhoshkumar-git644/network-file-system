@@ -1,6 +1,7 @@
 #include "ss_client_handler.h"
 #include "logger.h"
 #include "sentence_parser.h"
+#include <sys/stat.h>
 
 void* ss_handle_client_connection(void* arg) {
     int client_socket = *((int*)arg);
@@ -148,6 +149,23 @@ void* ss_handle_client_connection(void* arg) {
                 send(client_socket, "CREATE Successful!\n", 19, 0);
             } else {
                 send(client_socket, "ERROR: Could not create file\n", 29, 0);
+            }
+        } else if (cmd.type == CMD_DELETE) {
+            log_message(LOG_INFO, "Client requested DELETE for file: %s", cmd.arg1);
+            if (remove(cmd.arg1) == 0) {
+                send(client_socket, "DELETE Successful!\n", 19, 0);
+            } else {
+                send(client_socket, "ERROR: Could not delete file\n", 29, 0);
+            }
+        } else if (cmd.type == CMD_INFO) {
+            log_message(LOG_INFO, "Client requested INFO for file: %s", cmd.arg1);
+            struct stat st;
+            if (stat(cmd.arg1, &st) == 0) {
+                char info[MAX_BUFFER_SIZE];
+                sprintf(info, "Size: %ld bytes\nPermissions: %o\n", st.st_size, st.st_mode & 0777);
+                send(client_socket, info, strlen(info), 0);
+            } else {
+                send(client_socket, "ERROR: Could not retrieve file info\n", 36, 0);
             }
         } else {
             log_message(LOG_WARN, "Unsupported command received by SS from client");
