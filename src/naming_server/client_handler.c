@@ -27,11 +27,15 @@ void* handle_client_connection(void* arg) {
             log_message(LOG_INFO, "Received LIST command");
             // Placeholder: List users
             strcpy(response, "--> user1\n--> user2");
-        } else if (cmd.type == CMD_READ || cmd.type == CMD_WRITE || cmd.type == CMD_UNDO || cmd.type == CMD_DELETE || cmd.type == CMD_INFO) {
+        } else if (cmd.type == CMD_READ || cmd.type == CMD_WRITE || cmd.type == CMD_UNDO || 
+                   cmd.type == CMD_DELETE || cmd.type == CMD_INFO || 
+                   cmd.type == CMD_STREAM || cmd.type == CMD_EXEC) {
             const char* cmd_name = (cmd.type == CMD_READ) ? "READ" : 
                                    (cmd.type == CMD_WRITE) ? "WRITE" : 
                                    (cmd.type == CMD_UNDO) ? "UNDO" : 
-                                   (cmd.type == CMD_DELETE) ? "DELETE" : "INFO";
+                                   (cmd.type == CMD_DELETE) ? "DELETE" : 
+                                   (cmd.type == CMD_STREAM) ? "STREAM" : 
+                                   (cmd.type == CMD_EXEC) ? "EXEC" : "INFO";
             log_message(LOG_INFO, "Received %s command for file: %s", cmd_name, cmd.arg1);
             int ss_id = hashmap_lookup(cmd.arg1);
             if (ss_id >= 0 && ss_list[ss_id].is_active) {
