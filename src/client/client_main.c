@@ -242,6 +242,57 @@ void connect_to_ss_and_info(const char* ip, int port, const char* filename) {
     close(sock);
 }
 
+void connect_to_ss_and_stream(const char* ip, int port, const char* filename) {
+    int sock;
+    struct sockaddr_in serv_addr;
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) return;
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port);
+    inet_pton(AF_INET, ip, &serv_addr.sin_addr);
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) return;
+    
+    ClientCommand cmd;
+    memset(&cmd, 0, sizeof(ClientCommand));
+    cmd.type = CMD_STREAM;
+    strncpy(cmd.arg1, filename, MAX_FILENAME);
+    send(sock, &cmd, sizeof(cmd), 0);
+    
+    char buffer[MAX_BUFFER_SIZE];
+    int bytes;
+    printf("--- Streaming File Content ---\n");
+    while ((bytes = recv(sock, buffer, sizeof(buffer)-1, 0)) > 0) {
+        buffer[bytes] = '\0';
+        printf("%s", buffer);
+        if (strstr(buffer, "EOF")) break;
+    }
+    printf("\n--- End of Stream ---\n");
+    close(sock);
+}
+
+void connect_to_ss_and_exec(const char* ip, int port, const char* filename) {
+    int sock;
+    struct sockaddr_in serv_addr;
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) return;
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port);
+    inet_pton(AF_INET, ip, &serv_addr.sin_addr);
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) return;
+    
+    ClientCommand cmd;
+    memset(&cmd, 0, sizeof(ClientCommand));
+    cmd.type = CMD_EXEC;
+    strncpy(cmd.arg1, filename, MAX_FILENAME);
+    send(sock, &cmd, sizeof(cmd), 0);
+    
+    char buffer[MAX_BUFFER_SIZE];
+    int bytes = recv(sock, buffer, sizeof(buffer)-1, 0);
+    if (bytes > 0) {
+        buffer[bytes] = '\0';
+        printf("%s\n", buffer);
+    }
+    close(sock);
+}
+
 int main(int argc, char *argv[]) {
     init_logger(NULL); // Client logs to stdout by default
     
@@ -384,6 +435,10 @@ int main(int argc, char *argv[]) {
                         connect_to_ss_and_delete(ip, port, cmd.arg1);
                     } else if (cmd.type == CMD_INFO) {
                         connect_to_ss_and_info(ip, port, cmd.arg1);
+                    } else if (cmd.type == CMD_STREAM) {
+                        connect_to_ss_and_stream(ip, port, cmd.arg1);
+                    } else if (cmd.type == CMD_EXEC) {
+                        connect_to_ss_and_exec(ip, port, cmd.arg1);
                     }
                 } else {
                     printf("ERROR: Malformed SS_INFO response\n");
