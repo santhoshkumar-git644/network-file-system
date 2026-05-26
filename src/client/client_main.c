@@ -330,6 +330,22 @@ int main(int argc, char *argv[]) {
                 printf("Usage: INFO <filename>\n");
                 continue;
             }
+        } else if (strcmp(token, "STREAM") == 0) {
+            cmd.type = CMD_STREAM;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+            else {
+                printf("Usage: STREAM <filename>\n");
+                continue;
+            }
+        } else if (strcmp(token, "EXEC") == 0) {
+            cmd.type = CMD_EXEC;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+            else {
+                printf("Usage: EXEC <filename>\n");
+                continue;
+            }
         } else if (strcmp(token, "UNDO") == 0) {
             cmd.type = CMD_UNDO;
             char *arg = strtok(NULL, " ");
