@@ -2,13 +2,15 @@
 #include "logger.h"
 #include "ss_core.h"
 #include "ss_client_handler.h"
+#include "ss_file_manager.h"
 
 int main(int argc, char *argv[]) {
     init_logger("ss.log");
-    log_message(LOG_INFO, "Storage Server started.");
-
-    // Parse arguments (e.g., port to listen on)
-    int ss_port = 8081; // default fallback
+    log_message(LOG_INFO, "Starting Storage Server...");
+    
+    init_file_manager();
+    
+    int ss_port = 8080; // Default port
     if (argc > 1) {
         ss_port = atoi(argv[1]);
     }
