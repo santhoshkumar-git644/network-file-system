@@ -167,6 +167,37 @@ void* ss_handle_client_connection(void* arg) {
             } else {
                 send(client_socket, "ERROR: Could not retrieve file info\n", 36, 0);
             }
+        } else if (cmd.type == CMD_STREAM) {
+            log_message(LOG_INFO, "Client requested STREAM for file: %s", cmd.arg1);
+            FILE *fp = fopen(cmd.arg1, "rb");
+            if (fp) {
+                char buffer[1024];
+                size_t bytes;
+                while ((bytes = fread(buffer, 1, sizeof(buffer), fp)) > 0) {
+                    send(client_socket, buffer, bytes, 0);
+                    // usleep(50000); // Simulate streaming delay if desired
+                }
+                fclose(fp);
+                send(client_socket, "EOF", 3, 0);
+            } else {
+                send(client_socket, "ERROR: File not found\n", 22, 0);
+            }
+        } else if (cmd.type == CMD_EXEC) {
+            log_message(LOG_INFO, "Client requested EXEC for file: %s", cmd.arg1);
+            // Execute and stream output back
+            char command[MAX_FILENAME + 2];
+            snprintf(command, sizeof(command), "./%s", cmd.arg1);
+            FILE *fp = popen(command, "r");
+            if (fp) {
+                char buffer[1024];
+                while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+                    send(client_socket, buffer, strlen(buffer), 0);
+                }
+                pclose(fp);
+                send(client_socket, "EXECUTION COMPLETE\n", 19, 0);
+            } else {
+                send(client_socket, "ERROR: Could not execute file\n", 30, 0);
+            }
         } else {
             log_message(LOG_WARN, "Unsupported command received by SS from client");
         }
