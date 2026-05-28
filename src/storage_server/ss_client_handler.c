@@ -28,11 +28,15 @@ void* ss_handle_client_connection(void* arg) {
             log_message(LOG_INFO, "Client requested WRITE for file: %s (Sentence: %s)", cmd.arg1, cmd.arg2);
             int sentence_index = atoi(cmd.arg2);
             
-            // Lock sentence here (TODO: Implement actual locks)
-            log_message(LOG_INFO, "Locking sentence %d for file %s", sentence_index, cmd.arg1);
-            
-            // Read entire file into memory for now
-            FILE *fp = fopen(cmd.arg1, "r");
+            SSFileLock *fl = get_or_create_file_lock(cmd.arg1);
+            if (!fl) {
+                send(client_socket, "ERROR: Could not get file lock structure\n", 41, 0);
+            } else {
+                log_message(LOG_INFO, "Locking sentence %d for file %s", sentence_index, cmd.arg1);
+                acquire_write_lock(fl, sentence_index, 1);
+                
+                // Read entire file into memory for now
+                FILE *fp = fopen(cmd.arg1, "r");
             if (!fp) {
                 send(client_socket, "ERROR: File not found on SS\n", 28, 0);
             } else {
@@ -117,8 +121,10 @@ void* ss_handle_client_connection(void* arg) {
                     free(new_content);
                     
                     log_message(LOG_INFO, "Unlocking sentence %d for file %s", sentence_index, cmd.arg1);
+                    release_write_lock(fl, sentence_index);
                 }
             }
+            } // Close the get_or_create_file_lock block
         } else if (cmd.type == CMD_UNDO) {
             log_message(LOG_INFO, "Client requested UNDO for file: %s", cmd.arg1);
             char backup_name[MAX_FILENAME];
