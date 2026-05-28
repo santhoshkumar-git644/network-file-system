@@ -1,6 +1,7 @@
 #include "ss_client_handler.h"
 #include "logger.h"
 #include "sentence_parser.h"
+#include "ss_file_manager.h"
 #include <sys/stat.h>
 
 void* ss_handle_client_connection(void* arg) {
