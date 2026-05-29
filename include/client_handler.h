@@ -22,6 +22,7 @@ typedef struct {
     CommandType type;
     char arg1[MAX_BUFFER_SIZE];
     char arg2[MAX_BUFFER_SIZE];
+    int is_sync; // 1 for SYNC, 0 for ASYNC
 } ClientCommand;
 
 void* handle_client_connection(void* arg);
