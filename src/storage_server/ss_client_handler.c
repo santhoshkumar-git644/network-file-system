@@ -32,11 +32,14 @@ void* ss_handle_client_connection(void* arg) {
             if (!fl) {
                 send(client_socket, "ERROR: Could not get file lock structure\n", 41, 0);
             } else {
-                log_message(LOG_INFO, "Locking sentence %d for file %s", sentence_index, cmd.arg1);
-                acquire_write_lock(fl, sentence_index, 1);
+                log_message(LOG_INFO, "Locking sentence %d for file %s (Sync: %d)", sentence_index, cmd.arg1, cmd.is_sync);
                 
-                // Read entire file into memory for now
-                FILE *fp = fopen(cmd.arg1, "r");
+                if (acquire_write_lock(fl, sentence_index, cmd.is_sync) != 0) {
+                    send(client_socket, "ERROR: Could not acquire write lock (File busy)\n", 48, 0);
+                    // No need to unlock since we didn't acquire it
+                } else {
+                    // Read entire file into memory for now
+                    FILE *fp = fopen(cmd.arg1, "r");
             if (!fp) {
                 send(client_socket, "ERROR: File not found on SS\n", 28, 0);
             } else {
@@ -124,6 +127,7 @@ void* ss_handle_client_connection(void* arg) {
                     release_write_lock(fl, sentence_index);
                 }
             }
+                } // End of acquire_write_lock else branch
             } // Close the get_or_create_file_lock block
         } else if (cmd.type == CMD_UNDO) {
             log_message(LOG_INFO, "Client requested UNDO for file: %s", cmd.arg1);
