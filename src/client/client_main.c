@@ -349,11 +349,19 @@ int main(int argc, char *argv[]) {
             cmd.type = CMD_WRITE;
             char *arg1 = strtok(NULL, " ");
             char *arg2 = strtok(NULL, " ");
+            char *arg3 = strtok(NULL, " "); // Optional SYNC/ASYNC
+            
             if (arg1 && arg2) {
                 strncpy(cmd.arg1, arg1, sizeof(cmd.arg1) - 1);
                 strncpy(cmd.arg2, arg2, sizeof(cmd.arg2) - 1); // sentence number
+                
+                if (arg3 && strcmp(arg3, "ASYNC") == 0) {
+                    cmd.is_sync = 0;
+                } else {
+                    cmd.is_sync = 1; // Default to synchronous
+                }
             } else {
-                printf("Usage: WRITE <filename> <sentence_number>\n");
+                printf("Usage: WRITE <filename> <sentence_number> [SYNC|ASYNC]\n");
                 continue;
             }
             // For now, simple interaction. In a full implementation, the client would enter a write loop until ETIRW.
