@@ -15,6 +15,8 @@ typedef enum {
     CMD_UNDO,
     CMD_STREAM,
     CMD_EXEC,
+    CMD_CREATE_DIR,
+    CMD_LIST_DIR,
     CMD_UNKNOWN
 } CommandType;
 
