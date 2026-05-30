@@ -405,6 +405,22 @@ int main(int argc, char *argv[]) {
                 printf("Usage: EXEC <filename>\n");
                 continue;
             }
+        } else if (strcmp(token, "MKDIR") == 0) {
+            cmd.type = CMD_CREATE_DIR;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+            else {
+                printf("Usage: MKDIR <dirname>\n");
+                continue;
+            }
+        } else if (strcmp(token, "LSDIR") == 0) {
+            cmd.type = CMD_LIST_DIR;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+            else {
+                printf("Usage: LSDIR <dirname>\n");
+                continue;
+            }
         } else if (strcmp(token, "UNDO") == 0) {
             cmd.type = CMD_UNDO;
             char *arg = strtok(NULL, " ");
