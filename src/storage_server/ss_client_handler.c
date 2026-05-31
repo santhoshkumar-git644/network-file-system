@@ -3,6 +3,9 @@
 #include "sentence_parser.h"
 #include "ss_file_manager.h"
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 void* ss_handle_client_connection(void* arg) {
     int client_socket = *((int*)arg);
@@ -208,6 +211,36 @@ void* ss_handle_client_connection(void* arg) {
                 send(client_socket, "EXECUTION COMPLETE\n", 19, 0);
             } else {
                 send(client_socket, "ERROR: Could not execute file\n", 30, 0);
+            }
+        } else if (cmd.type == CMD_CREATE_DIR) {
+            log_message(LOG_INFO, "Client requested MKDIR for directory: %s", cmd.arg1);
+#ifdef _WIN32
+            if (mkdir(cmd.arg1) == 0) {
+#else
+            if (mkdir(cmd.arg1, 0777) == 0) {
+#endif
+                send(client_socket, "MKDIR Successful!\n", 18, 0);
+            } else {
+                send(client_socket, "ERROR: Could not create directory\n", 34, 0);
+            }
+        } else if (cmd.type == CMD_LIST_DIR) {
+            log_message(LOG_INFO, "Client requested LSDIR for directory: %s", cmd.arg1);
+            char command[MAX_FILENAME + 6];
+#ifdef _WIN32
+            snprintf(command, sizeof(command), "dir %s", cmd.arg1);
+#else
+            snprintf(command, sizeof(command), "ls -l %s", cmd.arg1);
+#endif
+            FILE *fp = popen(command, "r");
+            if (fp) {
+                char buffer[1024];
+                while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+                    send(client_socket, buffer, strlen(buffer), 0);
+                }
+                pclose(fp);
+                send(client_socket, "EOF", 3, 0);
+            } else {
+                send(client_socket, "ERROR: Could not list directory\n", 32, 0);
             }
         } else {
             log_message(LOG_WARN, "Unsupported command received by SS from client");
