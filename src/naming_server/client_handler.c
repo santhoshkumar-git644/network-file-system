@@ -29,15 +29,13 @@ void* handle_client_connection(void* arg) {
             strcpy(response, "--> user1\n--> user2");
         } else if (cmd.type == CMD_READ || cmd.type == CMD_WRITE || cmd.type == CMD_UNDO || 
                    cmd.type == CMD_DELETE || cmd.type == CMD_INFO || 
-                   cmd.type == CMD_STREAM || cmd.type == CMD_EXEC ||
-                   cmd.type == CMD_CREATE_DIR || cmd.type == CMD_LIST_DIR) {
+                   cmd.type == CMD_STREAM || cmd.type == CMD_EXEC || cmd.type == CMD_LIST_DIR) {
             const char* cmd_name = (cmd.type == CMD_READ) ? "READ" : 
                                    (cmd.type == CMD_WRITE) ? "WRITE" : 
                                    (cmd.type == CMD_UNDO) ? "UNDO" : 
                                    (cmd.type == CMD_DELETE) ? "DELETE" : 
                                    (cmd.type == CMD_STREAM) ? "STREAM" : 
                                    (cmd.type == CMD_EXEC) ? "EXEC" : 
-                                   (cmd.type == CMD_CREATE_DIR) ? "MKDIR" : 
                                    (cmd.type == CMD_LIST_DIR) ? "LSDIR" : "INFO";
             log_message(LOG_INFO, "Received %s command for target: %s", cmd_name, cmd.arg1);
             int ss_id = hashmap_lookup(cmd.arg1);
@@ -50,10 +48,11 @@ void* handle_client_connection(void* arg) {
                     hashmap_delete(cmd.arg1);
                 }
             } else {
-                strcpy(response, "ERROR: File not found or SS down");
+                strcpy(response, "ERROR: File/Directory not found or SS down");
             }
-        } else if (cmd.type == CMD_CREATE) {
-            log_message(LOG_INFO, "Received CREATE command for file: %s", cmd.arg1);
+        } else if (cmd.type == CMD_CREATE || cmd.type == CMD_CREATE_DIR) {
+            const char* cmd_name = (cmd.type == CMD_CREATE) ? "CREATE" : "MKDIR";
+            log_message(LOG_INFO, "Received %s command for target: %s", cmd_name, cmd.arg1);
             if (hashmap_lookup(cmd.arg1) >= 0) {
                 strcpy(response, "ERROR: File already exists");
             } else {
