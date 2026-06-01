@@ -472,6 +472,14 @@ int main(int argc, char *argv[]) {
                 printf("Usage: LSDIR <dirname>\n");
                 continue;
             }
+        } else if (strcmp(token, "SEARCH") == 0) {
+            cmd.type = CMD_SEARCH;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+            else {
+                printf("Usage: SEARCH <substring>\n");
+                continue;
+            }
         } else if (strcmp(token, "UNDO") == 0) {
             cmd.type = CMD_UNDO;
             char *arg = strtok(NULL, " ");
