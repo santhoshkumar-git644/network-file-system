@@ -54,12 +54,17 @@ void* handle_client_connection(void* arg) {
             const char* cmd_name = (cmd.type == CMD_CREATE) ? "CREATE" : "MKDIR";
             log_message(LOG_INFO, "Received %s command for target: %s", cmd_name, cmd.arg1);
             if (hashmap_lookup(cmd.arg1) >= 0) {
-                strcpy(response, "ERROR: File already exists");
+                strcpy(response, "ERROR: File/Directory already exists");
             } else {
+                static int last_selected_ss = -1;
                 int selected_ss = -1;
-                for (int i = 0; i < MAX_STORAGE_SERVERS; i++) {
-                    if (ss_list[i].is_active) {
-                        selected_ss = i;
+                
+                // Round robin selection
+                for (int i = 1; i <= MAX_STORAGE_SERVERS; i++) {
+                    int idx = (last_selected_ss + i) % MAX_STORAGE_SERVERS;
+                    if (ss_list[idx].is_active) {
+                        selected_ss = idx;
+                        last_selected_ss = idx;
                         break;
                     }
                 }
