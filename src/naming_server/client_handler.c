@@ -78,6 +78,11 @@ void* handle_client_connection(void* arg) {
                     strcpy(response, "ERROR: No Storage Servers available");
                 }
             }
+        } else if (cmd.type == CMD_SEARCH) {
+            log_message(LOG_INFO, "Received SEARCH command for substring: %s", cmd.arg1);
+            char search_results[MAX_BUFFER_SIZE];
+            hashmap_search(cmd.arg1, search_results, sizeof(search_results));
+            strncpy(response, search_results, MAX_BUFFER_SIZE - 1);
         } else {
             log_message(LOG_WARN, "Received UNKNOWN command");
             strcpy(response, "ERROR: Unknown command");

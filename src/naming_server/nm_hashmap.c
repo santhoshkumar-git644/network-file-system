@@ -85,3 +85,31 @@ void hashmap_delete(const char* filename) {
     
     pthread_mutex_unlock(&map_mutex);
 }
+
+void hashmap_search(const char* substring, char* results, int max_len) {
+    results[0] = '\0';
+    int current_len = 0;
+    
+    pthread_mutex_lock(&map_mutex);
+    for (int i = 0; i < HASHMAP_SIZE; i++) {
+        HashNode* curr = hashmap[i];
+        while (curr) {
+            if (strstr(curr->filename, substring) != NULL) {
+                int add_len = snprintf(results + current_len, max_len - current_len, "%s (SS: %d)\n", curr->filename, curr->ss_id);
+                if (add_len > 0) {
+                    current_len += add_len;
+                }
+                if (current_len >= max_len - 1) {
+                    pthread_mutex_unlock(&map_mutex);
+                    return;
+                }
+            }
+            curr = curr->next;
+        }
+    }
+    pthread_mutex_unlock(&map_mutex);
+    
+    if (current_len == 0) {
+        snprintf(results, max_len, "No matching files/directories found.\n");
+    }
+}
