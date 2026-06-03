@@ -1,5 +1,6 @@
 #include "nm_core.h"
 #include "client_handler.h"
+#include "nm_cache.h"
 
 #define NM_CLIENT_PORT 8082
 
@@ -57,6 +58,7 @@ int main(int argc, char *argv[]) {
     log_message(LOG_INFO, "Naming Server started.");
     
     init_nm_state();
+    cache_init();
 
     // Start client listener in a background thread
     pthread_t client_thread;
