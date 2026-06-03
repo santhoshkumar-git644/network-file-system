@@ -38,7 +38,18 @@ void* handle_client_connection(void* arg) {
                                    (cmd.type == CMD_EXEC) ? "EXEC" : 
                                    (cmd.type == CMD_LIST_DIR) ? "LSDIR" : "INFO";
             log_message(LOG_INFO, "Received %s command for target: %s", cmd_name, cmd.arg1);
-            int ss_id = hashmap_lookup(cmd.arg1);
+            
+            int ss_id = cache_get(cmd.arg1);
+            if (ss_id >= 0) {
+                log_message(LOG_INFO, "Cache hit for %s", cmd.arg1);
+            } else {
+                ss_id = hashmap_lookup(cmd.arg1);
+                if (ss_id >= 0) {
+                    log_message(LOG_INFO, "Cache miss for %s. Adding to cache.", cmd.arg1);
+                    cache_put(cmd.arg1, ss_id);
+                }
+            }
+            
             if (ss_id >= 0 && ss_list[ss_id].is_active) {
                 sprintf(response, "SS_INFO %s %d", ss_list[ss_id].info.ip, ss_list[ss_id].info.client_port);
                 
@@ -46,6 +57,7 @@ void* handle_client_connection(void* arg) {
                 // but for simplicity we can remove it immediately from NM perspective.
                 if (cmd.type == CMD_DELETE) {
                     hashmap_delete(cmd.arg1);
+                    cache_invalidate(cmd.arg1);
                 }
             } else {
                 strcpy(response, "ERROR: File/Directory not found or SS down");
@@ -73,6 +85,7 @@ void* handle_client_connection(void* arg) {
                     // Tell client to connect to SS and CREATE (Client directly creates on SS)
                     // Alternatively NM can tell SS. We'll return SS_INFO to Client so Client creates it.
                     hashmap_insert(cmd.arg1, selected_ss);
+                    cache_put(cmd.arg1, selected_ss);
                     sprintf(response, "SS_INFO %s %d", ss_list[selected_ss].info.ip, ss_list[selected_ss].info.client_port);
                 } else {
                     strcpy(response, "ERROR: No Storage Servers available");
