@@ -18,6 +18,7 @@ typedef enum {
     CMD_CREATE_DIR,
     CMD_LIST_DIR,
     CMD_SEARCH,
+    CMD_REPLICATE,
     CMD_UNKNOWN
 } CommandType;
 
