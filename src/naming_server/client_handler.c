@@ -1,6 +1,7 @@
 #include "client_handler.h"
 #include "logger.h"
 #include "nm_hashmap.h"
+#include "nm_replication.h"
 
 void* handle_client_connection(void* arg) {
     int client_socket = *((int*)arg);
@@ -86,6 +87,10 @@ void* handle_client_connection(void* arg) {
                     // Alternatively NM can tell SS. We'll return SS_INFO to Client so Client creates it.
                     hashmap_insert(cmd.arg1, selected_ss);
                     cache_put(cmd.arg1, selected_ss);
+                    
+                    // Simple asynchronous replication trigger (in real system, would wait for SS confirmation)
+                    trigger_replication(cmd.arg1, selected_ss);
+                    
                     sprintf(response, "SS_INFO %s %d", ss_list[selected_ss].info.ip, ss_list[selected_ss].info.client_port);
                 } else {
                     strcpy(response, "ERROR: No Storage Servers available");
