@@ -3,6 +3,9 @@
 #include "sentence_parser.h"
 #include "ss_file_manager.h"
 #include <sys/stat.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #ifdef _WIN32
 #include <direct.h>
 #endif
@@ -241,6 +244,29 @@ void* ss_handle_client_connection(void* arg) {
                 send(client_socket, "EOF", 3, 0);
             } else {
                 send(client_socket, "ERROR: Could not list directory\n", 32, 0);
+            }
+        } else if (cmd.type == CMD_REPLICATE) {
+            log_message(LOG_INFO, "SS received REPLICATE for file: %s to %s", cmd.arg1, cmd.arg2);
+            char *ip = strtok(cmd.arg2, ":");
+            char *port_str = strtok(NULL, ":");
+            if (ip && port_str) {
+                int target_port = atoi(port_str);
+                int repl_sock;
+                struct sockaddr_in repl_addr;
+                if ((repl_sock = socket(AF_INET, SOCK_STREAM, 0)) >= 0) {
+                    repl_addr.sin_family = AF_INET;
+                    repl_addr.sin_port = htons(target_port);
+                    inet_pton(AF_INET, ip, &repl_addr.sin_addr);
+                    if (connect(repl_sock, (struct sockaddr *)&repl_addr, sizeof(repl_addr)) == 0) {
+                        ClientCommand repl_cmd;
+                        memset(&repl_cmd, 0, sizeof(ClientCommand));
+                        repl_cmd.type = CMD_CREATE;
+                        strncpy(repl_cmd.arg1, cmd.arg1, MAX_FILENAME);
+                        send(repl_sock, &repl_cmd, sizeof(repl_cmd), 0);
+                        close(repl_sock);
+                        log_message(LOG_INFO, "Successfully forwarded REPLICATE as CREATE to target SS");
+                    }
+                }
             }
         } else {
             log_message(LOG_WARN, "Unsupported command received by SS from client");
