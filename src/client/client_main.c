@@ -480,6 +480,33 @@ int main(int argc, char *argv[]) {
                 printf("Usage: SEARCH <substring>\n");
                 continue;
             }
+        } else if (strcmp(token, "ADDUSER") == 0) {
+            cmd.type = CMD_ADD_USER;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+            else {
+                printf("Usage: ADDUSER <username>\n");
+                continue;
+            }
+        } else if (strcmp(token, "LOGIN") == 0) {
+            cmd.type = CMD_LOGIN;
+            char *arg = strtok(NULL, " ");
+            if (arg) strncpy(cmd.arg1, arg, sizeof(cmd.arg1) - 1);
+            else {
+                printf("Usage: LOGIN <username>\n");
+                continue;
+            }
+        } else if (strcmp(token, "GRANT") == 0) {
+            cmd.type = CMD_GRANT_ACCESS;
+            char *arg1 = strtok(NULL, " ");
+            char *arg2 = strtok(NULL, " ");
+            if (arg1 && arg2) {
+                strncpy(cmd.arg1, arg1, sizeof(cmd.arg1) - 1); // file
+                strncpy(cmd.arg2, arg2, sizeof(cmd.arg2) - 1); // user
+            } else {
+                printf("Usage: GRANT <file> <username>\n");
+                continue;
+            }
         } else if (strcmp(token, "UNDO") == 0) {
             cmd.type = CMD_UNDO;
             char *arg = strtok(NULL, " ");
