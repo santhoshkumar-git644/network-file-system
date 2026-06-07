@@ -2,6 +2,7 @@
 #include "logger.h"
 #include "nm_hashmap.h"
 #include "nm_replication.h"
+#include "nm_users.h"
 
 void* handle_client_connection(void* arg) {
     int client_socket = *((int*)arg);
@@ -101,6 +102,27 @@ void* handle_client_connection(void* arg) {
             char search_results[MAX_BUFFER_SIZE];
             hashmap_search(cmd.arg1, search_results, sizeof(search_results));
             strncpy(response, search_results, MAX_BUFFER_SIZE - 1);
+        } else if (cmd.type == CMD_ADD_USER) {
+            log_message(LOG_INFO, "Received ADDUSER command for user: %s", cmd.arg1);
+            if (add_user(cmd.arg1) == 1) {
+                strcpy(response, "USER_ADDED");
+            } else {
+                strcpy(response, "ERROR: User exists or max users reached");
+            }
+        } else if (cmd.type == CMD_LOGIN) {
+            log_message(LOG_INFO, "Received LOGIN command for user: %s", cmd.arg1);
+            if (user_exists(cmd.arg1)) {
+                strcpy(response, "LOGIN_SUCCESS");
+            } else {
+                strcpy(response, "ERROR: User not found");
+            }
+        } else if (cmd.type == CMD_GRANT_ACCESS) {
+            log_message(LOG_INFO, "Received GRANT command for file: %s to user: %s", cmd.arg1, cmd.arg2);
+            if (grant_access(cmd.arg2, cmd.arg1)) {
+                strcpy(response, "ACCESS_GRANTED");
+            } else {
+                strcpy(response, "ERROR: Could not grant access");
+            }
         } else {
             log_message(LOG_WARN, "Received UNKNOWN command");
             strcpy(response, "ERROR: Unknown command");

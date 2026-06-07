@@ -1,6 +1,7 @@
 #include "nm_core.h"
 #include "client_handler.h"
 #include "nm_cache.h"
+#include "nm_users.h"
 
 #define NM_CLIENT_PORT 8082
 
@@ -59,6 +60,7 @@ int main(int argc, char *argv[]) {
     
     init_nm_state();
     cache_init();
+    init_users();
 
     // Start client listener in a background thread
     pthread_t client_thread;
