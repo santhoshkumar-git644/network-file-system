@@ -378,6 +378,7 @@ int main(int argc, char *argv[]) {
         // Parse command
         ClientCommand cmd;
         memset(&cmd, 0, sizeof(ClientCommand));
+        strncpy(cmd.username, username, sizeof(cmd.username) - 1);
         
         char *token = strtok(command_buffer, " ");
         if (token == NULL) continue;

@@ -29,6 +29,7 @@ typedef struct {
     CommandType type;
     char arg1[MAX_BUFFER_SIZE];
     char arg2[MAX_BUFFER_SIZE];
+    char username[32]; // For authentication/authorization
     int is_sync; // 1 for SYNC, 0 for ASYNC
 } ClientCommand;
 
