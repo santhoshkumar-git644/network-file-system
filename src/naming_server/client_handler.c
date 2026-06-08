@@ -39,7 +39,17 @@ void* handle_client_connection(void* arg) {
                                    (cmd.type == CMD_STREAM) ? "STREAM" : 
                                    (cmd.type == CMD_EXEC) ? "EXEC" : 
                                    (cmd.type == CMD_LIST_DIR) ? "LSDIR" : "INFO";
-            log_message(LOG_INFO, "Received %s command for target: %s", cmd_name, cmd.arg1);
+            log_message(LOG_INFO, "Received %s command for target: %s from user: %s", cmd_name, cmd.arg1, cmd.username);
+            
+            // Basic authorization check
+            if (cmd.type == CMD_READ || cmd.type == CMD_WRITE || cmd.type == CMD_DELETE) {
+                if (!has_access(cmd.username, cmd.arg1)) {
+                    strcpy(response, "ERROR: Access denied");
+                    send(client_socket, response, strlen(response), 0);
+                    close(client_socket);
+                    return NULL;
+                }
+            }
             
             int ss_id = cache_get(cmd.arg1);
             if (ss_id >= 0) {
