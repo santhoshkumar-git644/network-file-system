@@ -102,6 +102,9 @@ void* handle_client_connection(void* arg) {
                     // Simple asynchronous replication trigger (in real system, would wait for SS confirmation)
                     trigger_replication(cmd.arg1, selected_ss);
                     
+                    // Grant access to creator
+                    grant_access(cmd.username, cmd.arg1);
+                    
                     sprintf(response, "SS_INFO %s %d", ss_list[selected_ss].info.ip, ss_list[selected_ss].info.client_port);
                 } else {
                     strcpy(response, "ERROR: No Storage Servers available");
