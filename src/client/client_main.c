@@ -346,7 +346,11 @@ void connect_to_ss_and_lsdir(const char* ip, int port, const char* dirname) {
 
 int main(int argc, char *argv[]) {
     init_logger(NULL); // Client logs to stdout by default
-    
+
+    // Usage: ./client [nm_ip] [nm_port]
+    const char* nm_ip   = (argc > 1) ? argv[1] : "127.0.0.1";
+    int         nm_port = (argc > 2) ? atoi(argv[2]) : 8082;
+
     char username[MAX_USERNAME];
     printf("Enter your username: ");
     if (fgets(username, sizeof(username), stdin) == NULL) {
@@ -354,12 +358,14 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     username[strcspn(username, "\n")] = 0; // Remove newline
-    
-    int nm_sock = connect_to_nm("127.0.0.1", 8082); // NM_CLIENT_PORT
+
+    printf("Connecting to Naming Server at %s:%d ...\n", nm_ip, nm_port);
+    int nm_sock = connect_to_nm(nm_ip, nm_port);
     if (nm_sock < 0) {
+        printf("ERROR: Could not connect to Naming Server at %s:%d\n", nm_ip, nm_port);
         return 1;
     }
-    
+
     log_message(LOG_INFO, "Client started and connected to NM for user: %s", username);
 
     // Main loop for commands
