@@ -61,7 +61,8 @@ void connect_to_nm(const char* nm_ip, int nm_port, int client_port) {
     log_message(LOG_INFO, "Sending SS Init packet. Files: %s", info.files);
     send(sock, &info, sizeof(info), 0);
     
-    close(sock);
+    // We intentionally do NOT close(sock) here!
+    // Keeping the socket open acts as a heartbeat for the NM to know this SS is alive.
 }
 
 void ss_init(int client_port) {
