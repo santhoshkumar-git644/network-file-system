@@ -1,6 +1,8 @@
 #include "client_handler.h"
 #include "logger.h"
+#include "nm_core.h"
 #include "nm_hashmap.h"
+#include "nm_cache.h"
 #include "nm_replication.h"
 #include "nm_users.h"
 
