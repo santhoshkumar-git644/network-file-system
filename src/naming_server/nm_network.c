@@ -21,7 +21,7 @@ void* handle_ss_connection(void* arg) {
     int bytes_read = recv(client_socket, &info, sizeof(info), 0);
     if (bytes_read > 0) {
         pthread_mutex_lock(&ss_list_mutex);
-        if (ss_count < MAX_STORAGE_SERVERS) {
+        if (ss_count < MAX_STORAGE_SERVERS) { // Fix #7: ss_count read inside lock
             int ss_id = ss_count;
             ss_list[ss_id].info = info;
             ss_list[ss_id].is_active = 1;
@@ -38,18 +38,27 @@ void* handle_ss_connection(void* arg) {
             }
             
             ss_count++;
+            pthread_mutex_unlock(&ss_list_mutex);
+            
+            // Fix #9: Keep thread alive to detect SS disconnect via heartbeat recv
+            // When SS goes offline, recv returns 0 or -1
+            char heartbeat_buf[4];
+            while (recv(client_socket, heartbeat_buf, sizeof(heartbeat_buf), 0) > 0) {
+                // SS is still alive, ignore any data
+            }
+            // SS disconnected — mark inactive
+            pthread_mutex_lock(&ss_list_mutex);
+            ss_list[ss_id].is_active = 0;
+            log_message(LOG_WARN, "SS %d (IP: %s) went offline", ss_id, info.ip);
+            pthread_mutex_unlock(&ss_list_mutex);
         } else {
             log_message(LOG_ERROR, "Max Storage Servers reached. Connection rejected.");
-            close(client_socket);
+            pthread_mutex_unlock(&ss_list_mutex); // Fix #7: unlock before close
         }
-        pthread_mutex_unlock(&ss_list_mutex);
     } else {
         log_message(LOG_ERROR, "Failed to receive SS Init packet");
-        close(client_socket);
     }
     
-    // In a real implementation, we would keep this thread alive to monitor the SS
-    // For now, we just register it.
-    
+    close(client_socket); // Fix #8: always close the socket
     return NULL;
 }

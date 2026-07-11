@@ -3,15 +3,20 @@
 
 #include "common.h"
 
+// Max words per sentence and max chars per word
+#define MAX_WORDS_PER_SENTENCE 256
+#define MAX_WORD_LEN 64
+#define MAX_SENTENCES 100
+
 // Define a sentence as an array of words
 typedef struct {
-    char words[MAX_BUFFER_SIZE][MAX_FILENAME];
+    char words[MAX_WORDS_PER_SENTENCE][MAX_WORD_LEN];
     int word_count;
     char delimiter; // ., !, or ?
 } Sentence;
 
 typedef struct {
-    Sentence sentences[100]; // Assume max 100 sentences for this assignment
+    Sentence sentences[MAX_SENTENCES];
     int sentence_count;
 } ParsedFile;
 

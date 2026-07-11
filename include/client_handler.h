@@ -27,9 +27,9 @@ typedef enum {
 
 typedef struct {
     CommandType type;
-    char arg1[MAX_BUFFER_SIZE];
-    char arg2[MAX_BUFFER_SIZE];
-    char username[32]; // For authentication/authorization
+    char arg1[MAX_FILENAME];
+    char arg2[MAX_FILENAME];
+    char username[MAX_USERNAME]; // For authentication/authorization
     int is_sync; // 1 for SYNC, 0 for ASYNC
 } ClientCommand;
 

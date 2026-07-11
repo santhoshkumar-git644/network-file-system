@@ -11,8 +11,7 @@ typedef struct {
     char files[MAX_BUFFER_SIZE]; // simple comma separated list of files for now
 } SS_Info;
 
-void ss_init(int client_port);
 void connect_to_nm(const char* nm_ip, int nm_port, int client_port);
-void scan_local_directory(char* file_list);
+void scan_local_directory(char* file_list, size_t max_len);
 
 #endif // SS_CORE_H

@@ -19,7 +19,8 @@ int add_user(const char* username) {
         }
     }
     if (num_users < MAX_USERS) {
-        strncpy(users[num_users].username, username, MAX_FILENAME);
+        strncpy(users[num_users].username, username, MAX_USERNAME - 1); // Fix #13
+        users[num_users].username[MAX_USERNAME - 1] = '\0';
         users[num_users].num_files = 0;
         num_users++;
         pthread_mutex_unlock(&users_lock);
@@ -73,4 +74,20 @@ int has_access(const char* username, const char* filename) {
     }
     pthread_mutex_unlock(&users_lock);
     return 0;
+}
+
+void list_users(char* output, int max_len) {
+    output[0] = '\0';
+    int current_len = 0;
+    pthread_mutex_lock(&users_lock);
+    for (int i = 0; i < num_users; i++) {
+        int add_len = snprintf(output + current_len, max_len - current_len,
+                               "--> %s\n", users[i].username);
+        if (add_len > 0) current_len += add_len;
+        if (current_len >= max_len - 1) break;
+    }
+    if (num_users == 0) {
+        snprintf(output, max_len, "No users registered.\n");
+    }
+    pthread_mutex_unlock(&users_lock);
 }

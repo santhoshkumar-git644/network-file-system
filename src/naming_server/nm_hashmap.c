@@ -35,7 +35,8 @@ int hashmap_insert(const char* filename, int ss_id) {
     }
     
     HashNode* new_node = (HashNode*)malloc(sizeof(HashNode));
-    strncpy(new_node->filename, filename, MAX_FILENAME);
+    strncpy(new_node->filename, filename, MAX_FILENAME - 1);
+    new_node->filename[MAX_FILENAME - 1] = '\0'; // Fix #14: ensure null termination
     new_node->ss_id = ss_id;
     new_node->next = hashmap[idx];
     hashmap[idx] = new_node;

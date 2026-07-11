@@ -11,7 +11,7 @@ void parse_file_content(const char* content, ParsedFile* parsed) {
     current_sentence.word_count = 0;
     current_sentence.delimiter = '.'; // Default
     
-    char current_word[MAX_FILENAME];
+    char current_word[MAX_WORD_LEN];
     int word_idx = 0;
     
     while (i < len) {
@@ -20,19 +20,24 @@ void parse_file_content(const char* content, ParsedFile* parsed) {
         if (c == ' ' || c == '\n' || c == '\r' || c == '.' || c == '!' || c == '?') {
             if (word_idx > 0) {
                 current_word[word_idx] = '\0';
-                strncpy(current_sentence.words[current_sentence.word_count], current_word, MAX_FILENAME);
-                current_sentence.word_count++;
+                if (current_sentence.word_count < MAX_WORDS_PER_SENTENCE) {
+                    strncpy(current_sentence.words[current_sentence.word_count], current_word, MAX_WORD_LEN - 1);
+                    current_sentence.words[current_sentence.word_count][MAX_WORD_LEN - 1] = '\0';
+                    current_sentence.word_count++;
+                }
                 word_idx = 0;
             }
             
             if (c == '.' || c == '!' || c == '?') {
                 current_sentence.delimiter = c;
-                parsed->sentences[parsed->sentence_count] = current_sentence;
-                parsed->sentence_count++;
+                if (parsed->sentence_count < MAX_SENTENCES) {
+                    parsed->sentences[parsed->sentence_count] = current_sentence;
+                    parsed->sentence_count++;
+                }
                 current_sentence.word_count = 0;
             }
         } else {
-            if (word_idx < MAX_FILENAME - 1) {
+            if (word_idx < MAX_WORD_LEN - 1) {
                 current_word[word_idx++] = c;
             }
         }
@@ -43,12 +48,17 @@ void parse_file_content(const char* content, ParsedFile* parsed) {
     if (current_sentence.word_count > 0 || word_idx > 0) {
         if (word_idx > 0) {
             current_word[word_idx] = '\0';
-            strncpy(current_sentence.words[current_sentence.word_count], current_word, MAX_FILENAME);
-            current_sentence.word_count++;
+            if (current_sentence.word_count < MAX_WORDS_PER_SENTENCE) {
+                strncpy(current_sentence.words[current_sentence.word_count], current_word, MAX_WORD_LEN - 1);
+                current_sentence.words[current_sentence.word_count][MAX_WORD_LEN - 1] = '\0';
+                current_sentence.word_count++;
+            }
         }
         current_sentence.delimiter = '\0'; // No delimiter
-        parsed->sentences[parsed->sentence_count] = current_sentence;
-        parsed->sentence_count++;
+        if (parsed->sentence_count < MAX_SENTENCES) {
+            parsed->sentences[parsed->sentence_count] = current_sentence;
+            parsed->sentence_count++;
+        }
     }
 }
 

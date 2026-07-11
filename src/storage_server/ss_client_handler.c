@@ -26,10 +26,11 @@ void* ss_handle_client_connection(void* arg) {
                     send(client_socket, buffer, strlen(buffer), 0);
                 }
                 fclose(fp);
+                send(client_socket, "EOF\n", 4, 0); // End marker only on success
             } else {
-                send(client_socket, "ERROR: File not found on SS\n", 28, 0);
+                char err[] = "ERROR: File not found on SS\nEOF\n";
+                send(client_socket, err, strlen(err), 0); // Send EOF too so client doesn't hang
             }
-            send(client_socket, "EOF\n", 4, 0);
         } else if (cmd.type == CMD_WRITE) {
             log_message(LOG_INFO, "Client requested WRITE for file: %s (Sentence: %s)", cmd.arg1, cmd.arg2);
             int sentence_index = atoi(cmd.arg2);
@@ -81,7 +82,7 @@ void* ss_handle_client_connection(void* arg) {
                 
                 if (sentence_index < 0 || sentence_index > parsed.sentence_count) {
                     send(client_socket, "ERROR: Sentence index out of range\n", 35, 0);
-                    // unlock
+                    release_write_lock(fl, sentence_index); // Fix #3: must release lock on early exit
                 } else {
                     send(client_socket, "ACK: Write session started", 26, 0);
                     char buffer[MAX_BUFFER_SIZE];
@@ -103,12 +104,14 @@ void* ss_handle_client_connection(void* arg) {
                             int word_idx = atoi(word_idx_str);
                             Sentence* s = &parsed.sentences[sentence_index];
                             
-                            // Insert word (shift others)
-                            if (word_idx >= 0 && word_idx <= s->word_count) {
+                            // Insert word (shift others), guard against overflow
+                            if (word_idx >= 0 && word_idx <= s->word_count && s->word_count < MAX_WORDS_PER_SENTENCE) {
                                 for (int i = s->word_count; i > word_idx; i--) {
-                                    strcpy(s->words[i], s->words[i-1]);
+                                    strncpy(s->words[i], s->words[i-1], MAX_WORD_LEN - 1);
+                                    s->words[i][MAX_WORD_LEN - 1] = '\0';
                                 }
-                                strcpy(s->words[word_idx], new_word);
+                                strncpy(s->words[word_idx], new_word, MAX_WORD_LEN - 1);
+                                s->words[word_idx][MAX_WORD_LEN - 1] = '\0';
                                 s->word_count++;
                                 send(client_socket, "ACK: Word inserted", 18, 0);
                             } else {
@@ -228,11 +231,11 @@ void* ss_handle_client_connection(void* arg) {
             }
         } else if (cmd.type == CMD_LIST_DIR) {
             log_message(LOG_INFO, "Client requested LSDIR for directory: %s", cmd.arg1);
-            char command[MAX_FILENAME + 6];
+            char command[MAX_FILENAME + 16]; // Fix #5: enough room for 'ls -l ' prefix
 #ifdef _WIN32
-            snprintf(command, sizeof(command), "dir %s", cmd.arg1);
+            snprintf(command, sizeof(command), "dir \"%s\"", cmd.arg1);
 #else
-            snprintf(command, sizeof(command), "ls -l %s", cmd.arg1);
+            snprintf(command, sizeof(command), "ls -l \"%s\"", cmd.arg1);
 #endif
             FILE *fp = popen(command, "r");
             if (fp) {
@@ -247,7 +250,10 @@ void* ss_handle_client_connection(void* arg) {
             }
         } else if (cmd.type == CMD_REPLICATE) {
             log_message(LOG_INFO, "SS received REPLICATE for file: %s to %s", cmd.arg1, cmd.arg2);
-            char *ip = strtok(cmd.arg2, ":");
+            char arg2_copy[MAX_FILENAME]; // Fix #4: copy before strtok mutates struct
+            strncpy(arg2_copy, cmd.arg2, sizeof(arg2_copy) - 1);
+            arg2_copy[sizeof(arg2_copy) - 1] = '\0';
+            char *ip = strtok(arg2_copy, ":");
             char *port_str = strtok(NULL, ":");
             if (ip && port_str) {
                 int target_port = atoi(port_str);

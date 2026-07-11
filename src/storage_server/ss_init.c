@@ -2,7 +2,7 @@
 #include "logger.h"
 #include <dirent.h>
 
-void scan_local_directory(char* file_list) {
+void scan_local_directory(char* file_list, size_t max_len) {
     DIR *dir;
     struct dirent *ent;
     file_list[0] = '\0'; // Initialize empty
@@ -11,10 +11,14 @@ void scan_local_directory(char* file_list) {
         while ((ent = readdir(dir)) != NULL) {
             // Only add regular files, skip . and ..
             if (ent->d_type == DT_REG) {
-                if (strlen(file_list) > 0) {
-                    strcat(file_list, ",");
+                size_t current_len = strlen(file_list);
+                size_t entry_len = strlen(ent->d_name);
+                if (current_len + entry_len + 2 < max_len) { // +2 for ',' and '\0'
+                    if (current_len > 0) {
+                        strcat(file_list, ",");
+                    }
+                    strcat(file_list, ent->d_name);
                 }
-                strncat(file_list, ent->d_name, MAX_FILENAME - 1);
             }
         }
         closedir(dir);
@@ -46,10 +50,13 @@ void connect_to_nm(const char* nm_ip, int nm_port, int client_port) {
     }
     
     SS_Info info;
-    strcpy(info.ip, "127.0.0.1"); // Dummy IP for now
+    // Fix #16: Use "127.0.0.1" as default, but it should ideally be the real external IP.
+    // For local testing, 127.0.0.1 works. Pass nm_ip as a hint for the SS's own IP.
+    strncpy(info.ip, nm_ip, INET_ADDRSTRLEN - 1);
+    info.ip[INET_ADDRSTRLEN - 1] = '\0';
     info.nm_port = nm_port;
     info.client_port = client_port;
-    scan_local_directory(info.files);
+    scan_local_directory(info.files, sizeof(info.files));
     
     log_message(LOG_INFO, "Sending SS Init packet. Files: %s", info.files);
     send(sock, &info, sizeof(info), 0);

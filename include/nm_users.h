@@ -7,7 +7,7 @@
 #define MAX_PERMISSIONS_PER_USER 100
 
 typedef struct {
-    char username[MAX_FILENAME];
+    char username[MAX_USERNAME];  // Fix #13: use MAX_USERNAME, not MAX_FILENAME
     char accessible_files[MAX_PERMISSIONS_PER_USER][MAX_FILENAME];
     int num_files;
 } User;
@@ -17,5 +17,6 @@ int add_user(const char* username);
 int user_exists(const char* username);
 int grant_access(const char* username, const char* filename);
 int has_access(const char* username, const char* filename);
+void list_users(char* output, int max_len);
 
 #endif // NM_USERS_H

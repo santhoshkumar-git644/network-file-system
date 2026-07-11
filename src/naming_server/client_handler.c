@@ -21,14 +21,18 @@ void* handle_client_connection(void* arg) {
         memset(response, 0, sizeof(response));
         
         if (cmd.type == CMD_VIEW) {
-            log_message(LOG_INFO, "Received VIEW command");
-            // Placeholder: In reality, we'd list files the user has access to.
-            // For now, let's just return a static list or ack.
-            strcpy(response, "--> file1.txt\n--> file2.txt");
+            log_message(LOG_INFO, "Received VIEW command for user: %s", cmd.username);
+            // Return all files the requesting user has access to
+            // (simple approach: search all hashmap entries)
+            char search_results[MAX_BUFFER_SIZE];
+            hashmap_search("", search_results, sizeof(search_results)); // empty string matches all
+            strncpy(response, search_results, MAX_BUFFER_SIZE - 1);
         } else if (cmd.type == CMD_LIST_USERS) {
             log_message(LOG_INFO, "Received LIST command");
-            // Placeholder: List users
-            strcpy(response, "--> user1\n--> user2");
+            // List registered users from nm_users
+            char user_list[MAX_BUFFER_SIZE];
+            list_users(user_list, sizeof(user_list));
+            strncpy(response, user_list, MAX_BUFFER_SIZE - 1);
         } else if (cmd.type == CMD_READ || cmd.type == CMD_WRITE || cmd.type == CMD_UNDO || 
                    cmd.type == CMD_DELETE || cmd.type == CMD_INFO || 
                    cmd.type == CMD_STREAM || cmd.type == CMD_EXEC || cmd.type == CMD_LIST_DIR) {
@@ -44,10 +48,10 @@ void* handle_client_connection(void* arg) {
             // Basic authorization check
             if (cmd.type == CMD_READ || cmd.type == CMD_WRITE || cmd.type == CMD_DELETE) {
                 if (!has_access(cmd.username, cmd.arg1)) {
+                    // Fix #11: send error and break loop instead of force-closing socket
                     strcpy(response, "ERROR: Access denied");
                     send(client_socket, response, strlen(response), 0);
-                    close(client_socket);
-                    return NULL;
+                    continue; // Do not process further, but keep connection open
                 }
             }
             
