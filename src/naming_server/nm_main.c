@@ -2,6 +2,7 @@
 #include "client_handler.h"
 #include "nm_cache.h"
 #include "nm_users.h"
+#include "logger.h"
 
 #define NM_CLIENT_PORT 8082
 
