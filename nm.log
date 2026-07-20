@@ -1,0 +1,26 @@
+[2026-07-21 01:06:38] [INFO] Naming Server started.
+[2026-07-21 01:06:38] [INFO] Naming Server listening for SS on port 8080
+[2026-07-21 01:06:38] [INFO] Naming Server listening for Clients on port 8082
+[2026-07-21 01:08:31] [INFO] New SS connection accepted
+[2026-07-21 01:08:31] [INFO] SS Registered: IP 172.18.196.93, NM Port 8080, Client Port 8181
+[2026-07-21 01:08:31] [INFO] Registered file 'Makefile' from SS 0
+[2026-07-21 01:08:31] [INFO] Registered file 'nm.log' from SS 0
+[2026-07-21 01:08:31] [INFO] Registered file 'README.md' from SS 0
+[2026-07-21 01:08:31] [INFO] Registered file 'ss.log' from SS 0
+[2026-07-21 01:08:31] [WARN] SS 0 (IP: 172.18.196.93) went offline
+[2026-07-21 01:11:50] [INFO] New Client connection accepted
+[2026-07-21 01:11:50] [INFO] Client disconnected
+[2026-07-21 01:14:58] [INFO] New SS connection accepted
+[2026-07-21 01:14:58] [INFO] SS Registered: IP 172.18.196.93, NM Port 8080, Client Port 8181
+[2026-07-21 01:14:58] [INFO] Registered file 'Makefile' from SS 1
+[2026-07-21 01:14:58] [INFO] Registered file 'nm.log' from SS 1
+[2026-07-21 01:14:58] [INFO] Registered file 'README.md' from SS 1
+[2026-07-21 01:14:58] [INFO] Registered file 'ss.log' from SS 1
+[2026-07-21 01:15:07] [INFO] New Client connection accepted
+[2026-07-21 01:17:34] [INFO] Received ADDUSER command for user: Santhosh
+[2026-07-21 01:17:44] [INFO] Received CREATE command for target: hi.txt
+[2026-07-21 01:17:44] [WARN] No target SS available for replication of hi.txt
+[2026-07-21 01:19:37] [INFO] New SS connection accepted
+[2026-07-21 01:19:37] [INFO] SS Registered: IP 127.0.0.1, NM Port 8080, Client Port 8180
+[2026-07-21 01:19:37] [INFO] Registered file 'ss.log' from SS 2
+[2026-07-21 01:20:54] [INFO] Received CREATE command for target: hi.txt

@@ -27,7 +27,7 @@ void scan_local_directory(char* file_list, size_t max_len) {
     }
 }
 
-void connect_to_nm(const char* nm_ip, int nm_port, int client_port) {
+void connect_to_nm(const char* nm_ip, int nm_port, int client_port, const char* own_ip) {
     int sock;
     struct sockaddr_in serv_addr;
     
@@ -50,9 +50,7 @@ void connect_to_nm(const char* nm_ip, int nm_port, int client_port) {
     }
     
     SS_Info info;
-    // Fix #16: Use "127.0.0.1" as default, but it should ideally be the real external IP.
-    // For local testing, 127.0.0.1 works. Pass nm_ip as a hint for the SS's own IP.
-    strncpy(info.ip, nm_ip, INET_ADDRSTRLEN - 1);
+    strncpy(info.ip, own_ip, INET_ADDRSTRLEN - 1);
     info.ip[INET_ADDRSTRLEN - 1] = '\0';
     info.nm_port = nm_port;
     info.client_port = client_port;

@@ -1,0 +1,4 @@
+[2026-07-21 01:19:37] [INFO] Starting Storage Server...
+[2026-07-21 01:19:37] [INFO] Storage Server will listen on client port 8180, connect to NM at 127.0.0.1:8080
+[2026-07-21 01:19:37] [INFO] Storage Server listening for Clients on port 8180
+[2026-07-21 01:19:37] [INFO] Sending SS Init packet. Files: ss.log
