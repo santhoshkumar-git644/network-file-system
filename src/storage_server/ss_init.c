@@ -63,8 +63,3 @@ void connect_to_nm(const char* nm_ip, int nm_port, int client_port, const char* 
     // Keeping the socket open acts as a heartbeat for the NM to know this SS is alive.
 }
 
-void ss_init(int client_port) {
-    log_message(LOG_INFO, "Initializing Storage Server on client port %d", client_port);
-    // Connect to NM on default port 8080
-    connect_to_nm("127.0.0.1", NM_PORT, client_port);
-}
